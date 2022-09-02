@@ -20,4 +20,8 @@ Changes in AccountsRepositoryInMemory
 
 Other Changes
 1. Created basic DTO called BalanceTransfer.
-2. Created exception to segregate balance transfer related business exceptions. 
+2. Created exception to segregate balance transfer related business exceptions.
+
+Unit testing -
+
+Added 5 unit tests in AccountServiceTest and 5 unit tests in AccountControllerTest which include positive and negative scenarios.
