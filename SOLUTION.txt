@@ -1,0 +1,23 @@
+Changes in AccountsController
+1. For thread safety added changed scope to request. This is single controller app so it should not hamper the performance.
+2. Added new POST API to perform balance transfer. This API accepts json for DTO BalanceTransfer which contains necessary fields.
+3. Based on success/failure, respective response is acknowledged.
+
+Changes in AccountsService
+1. Added dependency for NotificationService as notification needs to be sent to users.
+This can be further modified and separate rest calls for notification can be written.
+Those rest calls can be made via WebClient or HTTPClient to achieve total microservices experience.
+I have avoided this and direct injection of notification service is done.
+
+2. A method is added to transfer balance. This method is responsible for validations and transfer.
+
+3. A method is added to update account. This is needed to update account balances post successful transfer.
+
+Changes in AccountsRepositoryInMemory
+1. A method is added to update account
+
+2. Basic synchronization is used for thread safety, we can use SpringJPA or DB transactions for real dev systems.
+
+Other Changes
+1. Created basic DTO called BalanceTransfer.
+2. Created exception to segregate balance transfer related business exceptions. 
