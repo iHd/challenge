@@ -35,9 +35,10 @@ public class AccountsRepositoryInMemory implements AccountsRepository {
   }
 
   @Override
-  public void updateAccount(Account account) {
+  public Account updateAccount(Account account) {
     synchronized (this) {
       accounts.put(account.getAccountId(), account);
+      return accounts.get(account.getAccountId());
     }
   }
 

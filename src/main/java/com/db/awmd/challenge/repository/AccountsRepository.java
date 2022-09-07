@@ -17,5 +17,5 @@ public interface AccountsRepository {
    * Should be modified such as it always returns updated object
    * @param account
    */
-  void updateAccount(Account account);
+  Account updateAccount(Account account);
 }

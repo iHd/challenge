@@ -1,8 +1,7 @@
 package com.db.awmd.challenge;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
@@ -10,6 +9,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 import com.db.awmd.challenge.domain.Account;
 import com.db.awmd.challenge.service.AccountsService;
 import java.math.BigDecimal;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.WebApplicationContext;
 
 @RunWith(SpringRunner.class)
@@ -157,4 +158,80 @@ public class AccountsControllerTest {
             .content("{\"fromAccount\":\"ACC-TEST4-1\",\"toAccount\":\"ACC-TEST4-2\",\"transferAmount\":300}")).andExpect(status().isBadRequest());
   }
 
+  @Test
+  public void balanceTransferConcurrent_Pass1() throws Exception {
+    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"accountId\":\"ACC-TEST5-1\",\"balance\":1000}")).andExpect(status().isCreated());
+
+    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"accountId\":\"ACC-TEST5-2\",\"balance\":1000}")).andExpect(status().isCreated());
+
+    MvcResult mvcResult1 = (MvcResult) this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromAccount\":\"ACC-TEST5-1\",\"toAccount\":\"ACC-TEST5-2\",\"transferAmount\":100}")).andReturn();
+
+    MvcResult mvcResult2 = (MvcResult) this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromAccount\":\"ACC-TEST5-1\",\"toAccount\":\"ACC-TEST5-2\",\"transferAmount\":100}")).andReturn();
+
+    MvcResult mvcResult3 = (MvcResult) this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromAccount\":\"ACC-TEST5-1\",\"toAccount\":\"ACC-TEST5-2\",\"transferAmount\":100}")).andReturn();
+
+    MvcResult mvcResult4 = (MvcResult) this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromAccount\":\"ACC-TEST5-1\",\"toAccount\":\"ACC-TEST5-2\",\"transferAmount\":100}")).andReturn();
+
+    MvcResult mvcResult5 = (MvcResult) this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromAccount\":\"ACC-TEST5-1\",\"toAccount\":\"ACC-TEST5-2\",\"transferAmount\":100}")).andReturn();
+
+    MvcResult mvcResult6 = (MvcResult) this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"fromAccount\":\"ACC-TEST5-1\",\"toAccount\":\"ACC-TEST5-2\",\"transferAmount\":100}")).andReturn();
+
+    Thread t1 = new Thread(new RestCallTask(this.mockMvc,mvcResult1));
+    Thread t2 = new Thread(new RestCallTask(this.mockMvc,mvcResult2));
+    Thread t3 = new Thread(new RestCallTask(this.mockMvc,mvcResult3));
+    Thread t4 = new Thread(new RestCallTask(this.mockMvc,mvcResult4));
+    Thread t5 = new Thread(new RestCallTask(this.mockMvc,mvcResult5));
+    Thread t6 = new Thread(new RestCallTask(this.mockMvc,mvcResult6));
+
+    t1.start();
+    t2.start();
+    t3.start();
+    t4.start();
+    t5.start();
+    t6.start();
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    t5.join();
+    t6.join();
+
+    Account fromAccount = accountsService.getAccount("ACC-TEST5-1");
+    assertThat(fromAccount.getBalance()).isEqualByComparingTo("400");
+
+    Account toAccount = accountsService.getAccount("ACC-TEST5-2");
+    assertThat(toAccount.getBalance()).isEqualByComparingTo("1600");
+
+  }
+
+}
+
+class RestCallTask implements Runnable {
+
+  private final MockMvc mockMvc;
+  private final MvcResult mvcResult;
+
+  public RestCallTask(MockMvc mockMvc, MvcResult mvcResult) {
+    this.mockMvc = mockMvc;
+    this.mvcResult = mvcResult;
+  }
+
+
+  @Override
+  public void run() {
+    try {
+      mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isCreated());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 }

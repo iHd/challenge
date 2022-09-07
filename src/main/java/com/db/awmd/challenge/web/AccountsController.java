@@ -21,6 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.RequestScope;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 /**
  * PLEASE USE SOLUTION.txt for changes done to solve the challenge.
  */
@@ -61,14 +65,16 @@ public class AccountsController {
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, path = "/transfer")
   public ResponseEntity<Object> balanceTransfer(@RequestBody @Valid BalanceTransfer balanceTransfer) {
     log.info("Performing balance transfer {}", balanceTransfer);
-
     try {
-      this.accountsService.transferBalance(balanceTransfer);
-    } catch (BalanceTransferException bte) {
-      return new ResponseEntity<>(bte.getMessage(), HttpStatus.BAD_REQUEST);
+      this.accountsService.transferBalance(balanceTransfer).get();
+      return new ResponseEntity<>(HttpStatus.CREATED);
+    } catch (ExecutionException ex) {
+      log.error(ex.getMessage());
+      return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
-
-    return new ResponseEntity<>(HttpStatus.CREATED);
   }
 
 }
