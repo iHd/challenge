@@ -66,10 +66,11 @@ public class AccountsController {
   public ResponseEntity<Object> balanceTransfer(@RequestBody @Valid BalanceTransfer balanceTransfer) {
     log.info("Performing balance transfer {}", balanceTransfer);
     try {
-      this.accountsService.transferBalance(balanceTransfer).get();
+      //Waits if necessary for this future to complete, and then returns its result.
+      this.accountsService.transferBalance(balanceTransfer).get();//success, if no exception is thrown
       return new ResponseEntity<>(HttpStatus.CREATED);
     } catch (ExecutionException ex) {
-      log.error(ex.getMessage());
+      log.error(ex.getMessage());//BalanceTransfer exceptions
       return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     } catch (InterruptedException e) {
       log.error(e.getMessage());

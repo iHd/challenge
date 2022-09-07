@@ -25,3 +25,10 @@ Other Changes
 Unit testing -
 
 Added 5 unit tests in AccountServiceTest and 5 unit tests in AccountControllerTest which include positive and negative scenarios.
+
+
+***Thread Safety
+CompletableFuture is used to achieve thread safety for async requests.
+transferBalance method in AccountService is made capable to handle async calls
+Separate unit test is added to test if multiple threads can hit the transferBalance rest end point and the balance after all threads is checked for accuracy of transfer
+AsyncConfig added to enable concurrent execution

@@ -48,6 +48,12 @@ public class AccountsService {
     return this.accountsRepository.updateAccount(account);
   }
 
+  /**
+   * Returns a Future that may be explicitly completed (setting its value and status), and may be used as a CompletionStage,
+   * supporting dependent functions and actions that trigger upon its completion.
+   *
+   * When two or more threads attempt to complete, completeExceptionally, or cancel a CompletableFuture, only one of them succeeds.
+   */
   @Async
   @SneakyThrows
   public CompletableFuture<List<Account>> transferBalance(BalanceTransfer balanceTransfer) {
